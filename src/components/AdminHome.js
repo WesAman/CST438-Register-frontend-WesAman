@@ -1,4 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import AddStudent from './AddStudent';
+import EditStudent from './EditStudent';
+import {SERVER_URL} from '../constants';
+
+function setMessage(s) {
+    console.log("hello")
+}
 
 const AdminHome = () => {
     // Define a state variable 'students' and a function 'setStudents' to update it.
@@ -12,145 +19,115 @@ const AdminHome = () => {
         grade: '',
     });
 
-
     useEffect(() => {
         // called once after intial render
         fetchStudents();
         }, [] )
 
 
+// // Function to update an existing student's data in the backend API
+//     const updateStudent = async (studentId, updatedStudent) => {
+//         try {
+//             // Send a PUT request to the '/api/students/:studentId' endpoint with JSON data in the request body
+//             const response = await fetch(`/api/students/${studentId}`, {
+//                 method: 'PUT',
+//                 headers: {
+//                     'Content-Type': 'application/json',
+//                 },
+//                 body: JSON.stringify(updatedStudent),
+//             });
+//
+//             // Check if the response status is OK (200)
+//             if (response.ok) {
+//                 // If the student is updated successfully, fetch the updated list of students
+//                 fetchStudents();
+//             } else {
+//                 // If the response status is not OK, log an error message
+//                 console.error('Failed to update student');
+//             }
+//         } catch (error) {
+//             // Handle any errors that occur during the updateStudent operation
+//             console.error('Error updating student:', error);
+//         }
+//     };
+
+
 // Function to fetch the list of students from the backend API
-    const fetchStudents = async () => {
-		//TODO complete this method to fetch students and display list of students
-        try {
-            // Send a GET request to the '/api/students' endpoint (replace with your actual backend API endpoint)
-            const response = await fetch('/api/students');
+    const fetchStudents = () => {
+        // //TODO complete this method to fetch students and display list of students
+        fetch(`${SERVER_URL}/student`).then((response)=>response.json())
+            .then((data)=>setStudents(data))
+        //go to url -> give me json -> turn me into data, then with this data -> take info (react hook) and update this variable w/ this setter
 
-            // Check if the response status is OK (200)
-            if (response.ok) {
-                // If the response is successful, parse the JSON data from the response
-                const data = await response.json();
-
-                // Update the 'students' state with the received data
-                setStudents(data);
-            } else {
-                // If the response status is not OK, log an error message
-                console.error('Failed to fetch students');
-            }
-        } catch (error) {
-            // Handle any errors that occur during the fetch operation
-            console.error('Error fetching students:', error);
-        }
+            .catch((err) =>  { console.log("fetch error "+err); } );
+        //use this to catch any errors found within accessing the data when updating variables
+        console.log("students have been fetched");
     };
 
-    // Function to add a new student to the backend API
-    const addStudent = async () => {
-        try {
-            // Send a POST request to the '/api/students' endpoint with JSON data in the request body
-            const response = await fetch('/api/students', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(newStudent),
-            });
+    useEffect(fetchStudents, []);
 
-            // Check if the response status is OK (200)
-            if (response.ok) {
-                // If the student is added successfully, fetch the updated list of students
-                fetchStudents();
 
-                // Reset the 'newStudent' state to clear the input fields
-                setNewStudent({ name: '', grade: '' });
-            } else {
-                // If the response status is not OK, log an error message
-                console.error('Failed to add student');
-            }
-        } catch (error) {
-            // Handle any errors that occur during the addStudent operation
-            console.error('Error adding student:', error);
-        }
-    };
-    // Function to update an existing student's data in the backend API
-    const updateStudent = async (studentId, updatedStudent) => {
-        try {
-            // Send a PUT request to the '/api/students/:studentId' endpoint with JSON data in the request body
-            const response = await fetch(`/api/students/${studentId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedStudent),
-            });
-
-            // Check if the response status is OK (200)
-            if (response.ok) {
-                // If the student is updated successfully, fetch the updated list of students
-                fetchStudents();
-            } else {
-                // If the response status is not OK, log an error message
-                console.error('Failed to update student');
-            }
-        } catch (error) {
-            // Handle any errors that occur during the updateStudent operation
-            console.error('Error updating student:', error);
-        }
-    };
-    // Function to delete an existing student from the backend API
-    const deleteStudent = async (studentId) => {
-        try {
-            // Send a DELETE request to the '/api/students/:studentId' endpoint
-            const response = await fetch(`/api/students/${studentId}`, {
+    const refreshStudents = () => {
+        setMessage('');
+        fetchStudents();
+    }
+    const deleteStudent = (event) => {
+        const row_id = event.target.parentNode.parentNode.rowIndex - 1;
+        console.log("deleteStudent "+row_id);
+        const studentId = students[row_id].studentId;
+        console.log("student_id "+studentId);
+        fetch(`${SERVER_URL}/student/${studentId}`,
+            {
                 method: 'DELETE',
-            });
-
-            // Check if the response status is OK (200)
-            if (response.ok) {
-                // If the student is deleted successfully, fetch the updated list of students
-                fetchStudents();
-            } else {
-                // If the response status is not OK, log an error message
-                console.error('Failed to delete student');
             }
-        } catch (error) {
-            // Handle any errors that occur during the deleteStudent operation
-            console.error('Error deleting student:', error);
-        }
-    };
+        )
+            .then((response) => {
+                if (response.ok) {
+                    setMessage('Student deleted.');
+                    fetchStudents();
+                }
+            } )
+            .catch((err) =>  { setMessage('Error. '+err) } );
+    }
 
-
+    const headers = ['ID', 'NAME', 'EMAIL', 'STATUSCODE', 'STATUS'];
+    // fix add and edit student objects
+    // prof wants me to have my fetch methods in add student for add students, and edit students in the edit_students.js
     return (
         <div>
             <div>
                 <h3>Student List</h3>
-                <ul>
-                    {students.map((student) => (
-                        <li key={student.id}>
-                            {student.name} (Grade: {student.grade})
-                            <button onClick={() => updateStudent(student.id, { ...student, grade: 'A' })}>Update</button>
-                            <button onClick={() => deleteStudent(student.id)}>Delete</button>
-                        </li>
+                <table className="Center">
+                    <thead>
+                    <tr>
+                        {headers.map((s, idx) => (<th key={idx}>{s}</th>))}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {students.map((row,idx) => (
+                        <tr key={idx}>
+                            <td>{row.studentId}</td>
+                            <td>{row.name}</td>
+                            <td>{row.email}</td>
+                            <td>{row.statusCode}</td>
+                            <td>{row.status}</td>
+                            <td><button type="button" margin="auto" onClick={deleteStudent}>Delete</button></td>
+                            {/*<td><button type="button" margin="auto" onClick={}>Update</button></td>*/}
+                        </tr>
                     ))}
-                </ul>
+                    </tbody>
+                </table>
+               {/* component file: (like an object)*/}
+               <AddStudent onClose = {fetchStudents}/>
+
             </div>
-            <div>
-                <h3>Add New Student</h3>
-                <input
-                    type="text"
-                    placeholder="Name"
-                    value={newStudent.name}
-                    onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                />
-                <input
-                    type="text"
-                    placeholder="Grade"
-                    value={newStudent.grade}
-                    onChange={(e) => setNewStudent({ ...newStudent, grade: e.target.value })}
-                />
-                <button onClick={addStudent}>Add Student</button>
-            </div>
+
         </div>
     );
 };
 
 export default AdminHome;
+
+
+
+// Function to delete an existing student from the backend API

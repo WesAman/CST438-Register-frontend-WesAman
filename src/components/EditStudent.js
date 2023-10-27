@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import {SERVER_URL} from '../constants'
+import { SERVER_URL } from '../constants';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -7,12 +7,14 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 
-const EditStudent = (props)  => {
+
+const EditStudent = (props) => {
     const [open, setOpen] = useState(false);
     const [editMessage, setEditMessage] = useState('');
     const [student, setStudent] = useState(props.student);
+    const [successMessage, setSuccessMessage] = useState('');
 
-    const editOpen = (event) => {
+    const editOpen = () => {
         setOpen(true);
         setEditMessage('');
     };
@@ -23,49 +25,50 @@ const EditStudent = (props)  => {
     };
 
     const editChange = (event) => {
-        setStudent({...student,  [event.target.name]:event.target.value})
-    }
+        setStudent({ ...student, [event.target.name]: event.target.value });
+    };
 
     const editSave = () => {
-        console.log("editStudent "+JSON.stringify(student));
-        fetch(`${SERVER_URL}/student/${student.studentId}`,
-            {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify(student)
-            }
-        )
+        console.log("editStudent " + JSON.stringify(student));
+        fetch(`${SERVER_URL}/student/${student.studentId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(student),
+        })
             .then((response) => {
-                if (response.ok) return;
-                else return response.json();
+                if (response.ok) return response.json();
+                else throw new Error('Student not saved');
             })
-            .then((data) => {
-                if (data) {
-                    if (data.message) setEditMessage('Student not saved. '+data.message);
-                    else setEditMessage('Student not saved.');
-                } else setEditMessage('Student saved.');
+            .then(() => {
+                setSuccessMessage('Student saved.');
             })
-            .catch((err) =>  { setEditMessage('Error. '+err) } );
+            .catch((err) => {
+
+                setSuccessMessage('Error?????. ' + err.message);
+            });
+
+        setOpen(false);
     }
+
     return (
         <div>
-            <button type="button" margin="auto" onClick={editOpen}>Edit</button>
+            <button id="EditStudentButton" type="button" margin="auto" onClick={editOpen}>Edit</button>
             <Dialog open={open} >
                 <DialogTitle>Edit Student</DialogTitle>
-                <DialogContent  style={{paddingTop: 20}} >
+                <DialogContent style={{ paddingTop: 20 }}>
                     <h4>{editMessage}</h4>
-                    <TextField fullWidth label="student id" name="studentId" value={student.studentId} InputProps={{readOnly: true, }}/>
-                    <TextField autoFocus fullWidth label="name" name="name" value={student.name} onChange={editChange}  />
-                    <TextField fullWidth label="email" name="email" value={student.email} onChange={editChange}  />
+                    <h4 style={{ color: 'green' }}>{successMessage}</h4>
+                    <TextField fullWidth label="student id" name="studentId" value={student.studentId} InputProps={{ readOnly: true }} />
+                    <TextField autoFocus fullWidth label="name" name="name" value={student.name} onChange={editChange} />
+                    <TextField fullWidth label="email" name="email" value={student.email} onChange={editChange} />
                 </DialogContent>
                 <DialogActions>
                     <Button color="secondary" onClick={editClose}>Close</Button>
-                    <Button color="primary" onClick={editSave}>Save</Button>
+                    <Button id="saveButton" color="primary" onClick={editSave}>Save</Button>
                 </DialogActions>
             </Dialog>
         </div>
     )
 }
-
 
 export default EditStudent;

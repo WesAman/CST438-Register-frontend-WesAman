@@ -10,9 +10,11 @@ import TextField from '@mui/material/TextField';
 function AddStudent(props) {
     const [open, setOpen] = useState(false);
     const [student, setStudent] = useState({ name: '', email: '' });
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleClickOpen = () => {
         setStudent({ name: '', email: '' });
+        setSuccessMessage('');
         setOpen(true);
     };
 
@@ -26,7 +28,6 @@ function AddStudent(props) {
     };
 
     const addStudent = () => {
-        // Send a POST request to the '/api/students' endpoint with JSON data in the request body
         fetch(`${SERVER_URL}/student`, {
             method: 'POST',
             headers: {
@@ -36,9 +37,17 @@ function AddStudent(props) {
         })
             .then((response) => response.json())
             .then((data) => {
-                console.log('data-message' + data.message);
+                if (data.message) {
+                    setSuccessMessage(data.message); // Set success message received from the server
+                } else {
+                    setSuccessMessage('Student added successfully.'); // Default success message
+                }
                 // Close the dialog after adding the student
                 handleClose();
+            })
+            .catch((error) => {
+                console.error('Error adding student:', error);
+                setSuccessMessage('Error adding student. Please try again.'); // Set error message if request fails
             });
     };
 
@@ -52,12 +61,13 @@ function AddStudent(props) {
                 <DialogContent style={{ paddingTop: 20 }}>
                     <TextField autoFocus fullWidth label="Name" name="name" onChange={handleChange} />
                     <TextField autoFocus fullWidth label="Email" name="email" onChange={handleChange} />
+                    {successMessage && <div style={{ color: 'green', marginTop: '10px' }}>{successMessage}</div>}
                 </DialogContent>
                 <DialogActions>
                     <Button color="secondary" onClick={handleClose}>
                         Cancel
                     </Button>
-                    <Button id="add" color="primary" onClick={addStudent}>
+                    <Button id="AddStudentButton" color="primary" onClick={addStudent}>
                         Add
                     </Button>
                 </DialogActions>
